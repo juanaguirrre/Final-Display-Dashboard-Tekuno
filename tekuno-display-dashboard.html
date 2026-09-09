@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tekuno · Dashboard General</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   DASHBOARD GENERAL · TEKUNO
+   Réplica del diseño base. Escala 1:1 con la maqueta de 1280x720:
+   1rem = ancho/80, así que la proporción es idéntica en 1080p, 1440p y 4K.
+   ========================================================================== */
+
+:root{
+  /* Texto */
+  --ink:#16233A;
+  --ink-2:#5B6B7C;
+  --ink-3:#93A1AE;
+
+  /* Acentos */
+  --blue:#2F6FE0;
+  --blue-deep:#1B3B8F;
+  --orange:#F5821F;
+  --green:#12A05C;
+  --purple:#7C5CE0;
+  --amber:#E8A33D;
+  --red:#E0453A;
+  --teal:#14A39B;
+
+  /* Tintes de tarjeta */
+  --t-mint:#E7F4F0;
+  --t-lav:#EDEFFB;
+  --t-peach:#FBEDE7;
+  --t-cream:#FEF7EA;
+  --t-blue:#EAF0FB;
+  --t-sky:#EFF2FD;
+  --t-green:#EAF6F0;
+
+  --card:#FFFFFF;
+  --line:#E8ECF2;
+  --shadow:0 0.12rem 0.6rem rgba(22,35,58,0.05);
+  --r:0.9rem;
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+
+/* Lienzo fijo de 1920x1080. La página nunca se reacomoda: se escala completa,
+   así que las proporciones son idénticas en cualquier pantalla. 1rem = 24px. */
+html{font-size:24px;}
+body{
+  margin:0;width:100vw;height:100vh;overflow:hidden;
+  background:#0F1720;
+  font-family:'Poppins',system-ui,sans-serif;
+  color:var(--ink);
+}
+#canvas{
+  position:fixed;left:50%;top:50%;
+  width:1920px;height:1080px;
+  transform:translate(-50%,-50%) scale(1);
+  transform-origin:center center;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:
+    radial-gradient(48% 30% at 50% 108%, rgba(124,92,224,0.13), transparent 70%),
+    radial-gradient(40% 34% at 88% 96%, rgba(47,111,224,0.09), transparent 70%),
+    #FFFFFF;
+}
+h1,h2,h3,h4,p{margin:0;}
+ul{margin:0;padding:0;list-style:none;}
+.num{font-variant-numeric:tabular-nums;}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important;}}
+
+/* ---------------- Barra superior ---------------- */
+.topbar{
+  height:3.6rem;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2.5rem;
+  background:linear-gradient(96deg,
+    #14708A 0%, #2E8FB8 6%, #7FC3E4 11%,
+    #123C9E 22%, #0B1F6E 30%, #1B48C6 42%,
+    #1A7FB4 54%, #17A2A2 64%, #4FB79C 74%,
+    #A9C9B4 85%, #E9E7D2 100%);
+}
+.topbar::after{
+  content:"";position:absolute;top:-60%;left:4%;width:16%;height:220%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent);
+  transform:rotate(14deg);filter:blur(0.5rem);
+}
+.logo{display:flex;align-items:center;position:relative;z-index:1;}
+.logo .w{
+  font-weight:700;font-size:1.75rem;letter-spacing:0.01em;color:#fff;line-height:1;
+}
+.logo .o{
+  width:1.32rem;height:1.32rem;border-radius:50%;background:#fff;
+  display:inline-block;margin-left:0.14rem;position:relative;top:0.06rem;
+}
+.logo .o::after{
+  content:"";position:absolute;left:50%;top:50%;width:0.5rem;height:0.5rem;
+  border-radius:50%;background:#1B48C6;transform:translate(-50%,-50%);
+}
+.hud{
+  display:flex;align-items:center;gap:0.8rem;position:relative;z-index:1;
+  background:rgba(14,24,44,0.30);backdrop-filter:blur(0.3rem);
+  padding:0.34rem 0.85rem;border-radius:999px;
+}
+.hud .time{color:#fff;font-weight:600;font-size:1.05rem;line-height:1;}
+.hud .sep{width:1px;height:0.95rem;background:rgba(255,255,255,0.35);}
+.hud .sync{display:flex;align-items:center;gap:0.4rem;color:rgba(255,255,255,0.85);font-size:0.72rem;}
+.hud .led{width:0.42rem;height:0.42rem;border-radius:50%;background:#5CE0A0;}
+.hud[data-state="stale"] .led{background:#FFC861;}
+.hud[data-state="offline"] .led{background:#FF7A6E;}
+
+/* Progreso de la slide */
+.progress{height:0.19rem;background:rgba(22,35,58,0.07);}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--teal));}
+
+/* ---------------- Escenario ---------------- */
+.stage{position:relative;flex:1;min-height:0;}
+.slide{
+  position:absolute;inset:0;display:none;
+  padding:2.2rem 2.5rem 1.6rem;
+  flex-direction:column;
+}
+.slide.on{display:flex;}
+.slide.on .fade{animation:up .5s cubic-bezier(.2,.8,.2,1) both;}
+.slide.on .fade:nth-child(1){animation-delay:.03s}
+.slide.on .fade:nth-child(2){animation-delay:.10s}
+.slide.on .fade:nth-child(3){animation-delay:.17s}
+@keyframes up{from{opacity:0;transform:translateY(0.8rem);}to{opacity:1;transform:none;}}
+
+/* ---------------- Piezas base ---------------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);}
+.pane{border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.pane-h{display:flex;align-items:center;gap:0.65rem;padding:1.05rem 1.3rem 0.85rem;}
+.pane-h .ico{font-size:1.5rem;line-height:1;}
+.pane-h h3{font-size:1.42rem;font-weight:600;letter-spacing:-0.01em;}
+.pane-b{padding:0 0.7rem 0.7rem;display:flex;flex-direction:column;gap:0.55rem;min-height:0;overflow:hidden;}
+
+.row{
+  background:#fff;border-radius:0.65rem;padding:0.85rem 1.15rem;
+  display:flex;align-items:center;justify-content:space-between;gap:0.9rem;
+}
+.row .nm{font-size:1.22rem;font-weight:600;line-height:1.25;}
+.row .rl{font-size:0.92rem;color:var(--ink-3);font-weight:400;margin-top:0.08rem;}
+.row .vl{font-size:1.12rem;font-weight:600;white-space:nowrap;}
+.vl.blue{color:var(--blue);} .vl.green{color:var(--green);} .vl.purple{color:var(--purple);}
+
+.tint-sky{background:var(--t-sky);} .tint-green{background:var(--t-green);}
+.tint-lav{background:var(--t-lav);} .tint-cream{background:var(--t-cream);}
+.tint-blue{background:var(--t-blue);}
+
+/* ---------------- Slide 1: panorama ---------------- */
+#s1 .grid{display:grid;grid-template-columns:1fr 1.02fr 0.55fr;gap:1.5rem;flex:1;min-height:0;}
+#s1 .col{display:flex;flex-direction:column;gap:1.1rem;min-height:0;}
+#s1 .col:nth-child(2) .pane{flex:none;}
+
+.tekasist{display:flex;align-items:center;gap:1.2rem;padding:1.05rem 1.3rem;}
+.tekasist .badge{
+  width:3.9rem;height:3.9rem;border-radius:50%;flex:none;position:relative;
+  background:radial-gradient(circle at 32% 28%,#2E7A6E,#123B3F 78%);
+  display:grid;place-items:center;box-shadow:0 0.15rem 0.5rem rgba(18,59,63,0.28);
+}
+.tekasist .badge .clock{
+  width:1.9rem;height:1.9rem;border-radius:50%;background:#fff;position:relative;
+  border:0.17rem solid #E0453A;
+}
+.tekasist .badge .clock::before,.tekasist .badge .clock::after{
+  content:"";position:absolute;left:50%;top:50%;background:#16233A;border-radius:2px;transform-origin:0 50%;
+}
+.tekasist .badge .clock::before{width:0.56rem;height:0.12rem;transform:translate(0,-50%) rotate(-58deg);}
+.tekasist .badge .clock::after{width:0.4rem;height:0.12rem;transform:translate(0,-50%) rotate(28deg);}
+.tekasist .badge .tag{
+  position:absolute;bottom:0.16rem;left:50%;transform:translateX(-50%);
+  font-size:0.42rem;color:#BFE6DD;font-weight:600;letter-spacing:0.02em;
+}
+.tekasist .msg{font-size:1.38rem;font-weight:600;color:var(--ink);line-height:1.25;}
+
+.anuncio-card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.anuncio-card .head{background:var(--t-cream);}
+.anuncio-card .body{flex:1;min-height:0;padding:0.75rem;display:flex;}
+.anuncio-card .body img{width:100%;height:100%;object-fit:contain;border-radius:0.45rem;}
+
+/* Póster de anuncio recreado (se usa cuando la API no manda imagen) */
+.poster{
+  width:100%;height:100%;border-radius:0.45rem;overflow:hidden;display:flex;flex-direction:column;
+  background:#F7F9FC;border:1px solid var(--line);
+}
+.poster .top{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:0;}
+.poster .left{
+  position:relative;padding:0.7rem 0.75rem;display:flex;flex-direction:column;justify-content:space-between;
+  background:linear-gradient(160deg,#F2F5FA 0%,#F2F5FA 46%,#3C5A72 46%,#16354B 100%);
+}
+.poster .ribbon{
+  align-self:flex-start;background:linear-gradient(90deg,#D8A93C,#F0CB6B);
+  color:#3A2A05;font-size:0.42rem;font-weight:700;padding:0.12rem 0.5rem;border-radius:0.15rem;
+}
+.poster .big{font-size:1.15rem;font-weight:700;line-height:1.02;color:#12305A;margin-top:0.22rem;letter-spacing:-0.01em;}
+.poster .sub{font-size:0.4rem;color:#12305A;margin-top:0.3rem;line-height:1.35;font-weight:500;}
+.poster .sub b{font-weight:700;}
+.poster .thanks{
+  background:rgba(10,32,48,0.72);border-radius:0.9rem;padding:0.3rem 0.55rem;
+  font-size:0.36rem;color:#EAF2F7;line-height:1.35;
+}
+.poster .right{padding:0.7rem 0.8rem;display:flex;flex-direction:column;gap:0.35rem;}
+.poster .r1{font-size:0.55rem;font-weight:700;color:#12305A;line-height:1.1;}
+.poster .r1 em{font-style:normal;color:var(--blue);}
+.poster .pill{
+  background:#12305A;color:#fff;font-size:0.36rem;font-weight:600;
+  padding:0.14rem 0.45rem;border-radius:0.15rem;align-self:flex-start;
+}
+.poster .cap{font-size:0.36rem;color:#5B6B7C;}
+.poster .compare{
+  background:#E9EDF2;border-radius:0.3rem;padding:0.35rem 0.5rem;
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.4rem;text-align:center;
+}
+.poster .compare .lbl{font-size:0.32rem;color:#5B6B7C;font-weight:600;}
+.poster .compare .val{font-size:0.72rem;font-weight:700;color:#16233A;line-height:1;}
+.poster .compare .val.up{color:var(--green);}
+.poster .compare .unit{font-size:0.28rem;color:#5B6B7C;font-weight:600;}
+.poster .compare .arw{font-size:0.7rem;color:#8C9AA8;}
+.poster .badge-pct{
+  background:#12305A;color:#fff;border-radius:0.3rem;padding:0.32rem 0.5rem;
+  font-size:0.38rem;display:flex;align-items:center;gap:0.4rem;line-height:1.3;
+}
+.poster .badge-pct b{color:#5CE0A0;}
+.poster .badge-pct .chk{
+  width:0.62rem;height:0.62rem;border-radius:50%;border:0.09rem solid #5CE0A0;flex:none;
+  display:grid;place-items:center;font-size:0.34rem;color:#5CE0A0;
+}
+.poster .script{font-size:0.62rem;font-weight:700;color:#C79A2E;font-style:italic;}
+.poster .note{font-size:0.34rem;color:#5B6B7C;line-height:1.4;}
+.poster .note b{color:#16233A;}
+.poster .values{
+  background:#12305A;color:#fff;display:flex;align-items:center;justify-content:space-around;
+  padding:0.3rem 0.5rem;font-size:0.3rem;font-weight:600;gap:0.4rem;
+}
+.poster .values span{opacity:0.92;text-align:center;line-height:1.25;}
+.poster .foot{
+  background:#F2F5FA;text-align:center;padding:0.26rem;font-size:0.38rem;font-weight:700;color:#12305A;
+}
+.poster .foot em{font-style:normal;font-weight:400;color:#5B6B7C;}
+
+/* Columna derecha de métricas */
+#s1 .rail{display:flex;flex-direction:column;gap:0.7rem;min-height:0;}
+.stat{border-radius:var(--r);padding:0.9rem 1.1rem;flex:1;display:flex;flex-direction:column;justify-content:center;}
+.stat .lbl{font-size:0.82rem;font-weight:600;color:var(--ink-3);letter-spacing:0.08em;}
+.stat .foot{display:flex;align-items:baseline;justify-content:space-between;gap:0.5rem;margin-top:0.2rem;}
+.stat .n{font-size:3.35rem;font-weight:600;line-height:1;letter-spacing:-0.02em;}
+.stat .d{font-size:0.98rem;font-weight:600;}
+.d.green{color:var(--green);} .d.blue{color:var(--blue);} .d.grey{color:var(--ink-3);}
+.rail h4{font-size:1.5rem;font-weight:600;margin:0.5rem 0 0;}
+.tk{border-radius:var(--r);padding:0.85rem 1.15rem;display:flex;align-items:center;justify-content:space-between;flex:0.8;}
+.tk .lbl{font-size:0.9rem;font-weight:600;color:var(--ink-3);letter-spacing:0.06em;}
+.tk .n{font-size:2.15rem;font-weight:700;line-height:1;}
+.n.orange{color:var(--orange);} .n.blue{color:var(--blue);} .n.red{color:var(--red);}
+
+/* ---------------- Slide 2: anuncio a pantalla completa ---------------- */
+#s2 .full{
+  flex:1;display:flex;align-items:center;justify-content:center;min-height:0;
+  padding:0.6rem 5rem;
+}
+#s2 .shell{
+  width:100%;height:100%;max-width:64rem;border-radius:1.1rem;background:#fff;
+  border:1px solid var(--line);box-shadow:0 0.5rem 2rem rgba(22,35,58,0.09);
+  padding:0.9rem;display:flex;
+}
+#s2 .poster .big{font-size:2.35rem;}
+#s2 .poster .ribbon{font-size:0.82rem;padding:0.2rem 0.9rem;border-radius:0.25rem;}
+#s2 .poster .sub{font-size:0.8rem;}
+#s2 .poster .thanks{font-size:0.7rem;border-radius:1.4rem;padding:0.5rem 0.9rem;}
+#s2 .poster .r1{font-size:1.1rem;}
+#s2 .poster .pill{font-size:0.7rem;padding:0.2rem 0.8rem;}
+#s2 .poster .cap{font-size:0.7rem;}
+#s2 .poster .compare .val{font-size:1.45rem;}
+#s2 .poster .compare .lbl{font-size:0.62rem;}
+#s2 .poster .compare .unit{font-size:0.55rem;}
+#s2 .poster .compare .arw{font-size:1.35rem;}
+#s2 .poster .badge-pct{font-size:0.74rem;}
+#s2 .poster .badge-pct .chk{width:1.2rem;height:1.2rem;font-size:0.66rem;}
+#s2 .poster .script{font-size:1.25rem;}
+#s2 .poster .note{font-size:0.66rem;}
+#s2 .poster .values{font-size:0.58rem;padding:0.55rem;}
+#s2 .poster .foot{font-size:0.74rem;padding:0.5rem;}
+#s2 .poster .right{gap:0.6rem;padding:1.2rem 1.4rem;}
+#s2 .poster .left{padding:1.2rem 1.3rem;}
+
+/* ---------------- Slide 3: calendario ---------------- */
+#s3 .grid{display:grid;grid-template-columns:1fr 0.62fr;gap:1.3rem;flex:1;min-height:0;}
+#s3 .cal-col{display:flex;flex-direction:column;gap:1.05rem;min-height:0;}
+#s3 .col .pane{flex:0 0 auto;}
+#s3 .pane-h{padding:0.85rem 1.1rem 0.65rem;}
+#s3 .pane-h h3{font-size:1.25rem;}
+#s3 .pane-h .ico{font-size:1.32rem;}
+#s3 .row{padding:0.68rem 1rem;}
+#s3 .row .nm{font-size:1.06rem;}
+#s3 .row .rl{font-size:0.82rem;}
+#s3 .row .vl{font-size:0.98rem;}
+.juntas-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:0.7rem;padding:0 0.7rem 0.7rem;}
+.juntas-strip .row{flex-direction:column;align-items:flex-start;gap:0.3rem;}
+.juntas-strip .row .vl{font-size:1.02rem;}
+.cal{padding:1.1rem 1.2rem;display:flex;flex-direction:column;min-height:0;flex:1;}
+.cal .h{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.85rem;}
+.cal .h h2{font-size:1.5rem;font-weight:700;letter-spacing:0.01em;text-transform:uppercase;}
+.legend{display:flex;gap:0.85rem;flex-wrap:wrap;justify-content:flex-end;}
+.legend span{display:flex;align-items:center;gap:0.35rem;font-size:0.78rem;color:var(--ink-2);}
+.legend i{width:0.5rem;height:0.5rem;border-radius:50%;display:inline-block;}
+.cal .dows{display:grid;grid-template-columns:repeat(7,1fr);gap:0.35rem;margin-bottom:0.35rem;}
+.cal .dows span{
+  text-align:center;font-size:0.72rem;font-weight:500;color:var(--ink-3);
+  letter-spacing:0.08em;text-transform:uppercase;
+}
+.cal .grid-days{display:grid;grid-template-columns:repeat(7,1fr);gap:0.35rem;flex:1;min-height:0;}
+.cell{
+  border:1px solid var(--line);border-radius:0.4rem;background:#fff;
+  padding:0.28rem;display:flex;flex-direction:column;align-items:center;gap:0.18rem;
+  min-height:0;overflow:hidden;
+}
+.cell.void{border-color:transparent;background:transparent;}
+.cell .d{font-size:0.92rem;font-weight:500;color:var(--ink);}
+.cell.today{border-color:var(--blue);box-shadow:0 0 0 0.09rem rgba(47,111,224,0.22);}
+.cell.today .d{color:var(--blue);font-weight:700;}
+.pill{
+  width:100%;border-radius:0.3rem;padding:0.1rem 0.22rem;
+  font-size:0.6rem;font-weight:600;color:#fff;line-height:1.35;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
+}
+.pill.cum{background:var(--blue);} .pill.vac{background:var(--green);}
+.pill.jun{background:var(--purple);} .pill.cap{background:var(--amber);}
+
+/* ---------------- Slide 4: tickets ---------------- */
+#s4 .box{background:var(--t-blue);border-radius:1.05rem;padding:1.2rem 1.3rem;flex:1;display:flex;flex-direction:column;min-height:0;}
+#s4 .box .h{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+#s4 .box .h h2{font-size:1.35rem;font-weight:600;}
+.total-pill{
+  background:#fff;border-radius:0.65rem;padding:0.5rem 0.95rem;display:flex;align-items:center;gap:0.75rem;
+  box-shadow:var(--shadow);
+}
+.total-pill span{font-size:0.66rem;font-weight:600;color:var(--ink-3);letter-spacing:0.07em;}
+.total-pill b{font-size:1.35rem;font-weight:700;color:var(--orange);line-height:1;}
+#s4 .charts{
+  display:grid;grid-template-columns:1.45fr 1fr;grid-template-rows:1fr 1fr;
+  gap:1.05rem;flex:1;min-height:0;
+}
+.viz-card{
+  background:#fff;border-radius:0.8rem;padding:1rem 1.25rem;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;min-height:0;
+}
+.viz-card .t{font-size:1.12rem;font-weight:600;line-height:1.2;}
+.viz-card .s{font-size:0.8rem;color:var(--ink-3);margin-bottom:0.7rem;}
+
+/* Barras horizontales por sistema */
+.hbars{display:flex;flex-direction:column;gap:0.5rem;flex:1;justify-content:center;min-height:0;}
+.hb{display:grid;grid-template-columns:9.5rem 1fr 3.2rem;align-items:center;gap:0.8rem;}
+.hb .nm{font-size:1rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hb .tr{height:1.25rem;border-radius:0.65rem;background:#EDF1F6;overflow:hidden;}
+.hb .tr i{display:block;height:100%;border-radius:0.65rem;transition:width .8s ease;}
+.hb .vv{font-size:1.2rem;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;}
+
+/* Barras verticales agrupadas */
+.spark{flex:1;display:flex;align-items:flex-end;gap:0.7rem;min-height:0;}
+.spark .g{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.35rem;height:100%;justify-content:flex-end;}
+.spark .pair{display:flex;align-items:flex-end;gap:0.22rem;width:100%;height:100%;justify-content:center;}
+.spark .b{width:36%;border-radius:0.2rem 0.2rem 0 0;transition:height .8s ease;position:relative;}
+.spark .b.nue{background:var(--orange);} .spark .b.cer{background:#8FCFAE;}
+.spark .cap{font-size:0.8rem;color:var(--ink-3);font-weight:500;}
+.viz-legend{display:flex;gap:1.1rem;margin-top:0.55rem;}
+.viz-legend span{display:flex;align-items:center;gap:0.35rem;font-size:0.8rem;color:var(--ink-2);}
+.viz-legend i{width:0.55rem;height:0.55rem;border-radius:0.14rem;}
+
+/* Anillo de desempeño */
+.gauge{display:flex;align-items:center;gap:1.3rem;flex:1;}
+.gauge .ring{position:relative;width:7.2rem;height:7.2rem;flex:none;display:grid;place-items:center;}
+.gauge svg{width:100%;height:100%;transform:rotate(-90deg);}
+.gauge .bgc{stroke:#EDF1F6;} .gauge .fgc{stroke:var(--green);stroke-linecap:round;transition:stroke-dashoffset 1s ease;}
+.gauge .mid{position:absolute;text-align:center;}
+.gauge .mid b{display:block;font-size:1.85rem;font-weight:700;line-height:1;}
+.gauge .mid span{font-size:0.7rem;color:var(--ink-3);}
+.gauge .facts{display:flex;flex-direction:column;gap:0.7rem;}
+.gauge .facts .f{display:flex;align-items:baseline;gap:0.5rem;}
+.gauge .facts .f b{font-size:1.7rem;font-weight:700;line-height:1;}
+.gauge .facts .f span{font-size:0.85rem;color:var(--ink-2);line-height:1.25;}
+
+/* ---------------- Slide 5: filosofía ---------------- */
+#s5 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem;flex:1;align-items:center;min-height:0;padding:1.5rem 0;}
+.phil{
+  border:1.5px solid;border-radius:0.85rem;background:#fff;padding:1.5rem 1.6rem;
+  display:flex;flex-direction:column;gap:0.55rem;position:relative;overflow:hidden;
+  transition:transform .55s ease, box-shadow .55s ease;
+  min-height:19rem;
+}
+.phil::before{
+  content:"";position:absolute;inset:0;opacity:0;transition:opacity .55s ease;
+  background:linear-gradient(160deg,var(--tone-soft),transparent 62%);
+}
+.phil.hot{transform:translateY(-0.5rem);box-shadow:0 0.9rem 2.2rem rgba(22,35,58,0.11);}
+.phil.hot::before{opacity:1;}
+.phil > *{position:relative;z-index:1;}
+.phil .ico{
+  width:2.1rem;height:2.1rem;border-radius:0.55rem;display:grid;place-items:center;
+  background:var(--tone-soft);color:var(--tone);
+}
+.phil .ico svg{width:1.1rem;height:1.1rem;}
+.phil .eyebrow{font-size:0.68rem;font-weight:600;color:var(--tone);letter-spacing:0.11em;}
+.phil h3{font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;}
+.phil p{font-size:0.95rem;color:var(--ink-2);line-height:1.55;}
+.phil ul{display:flex;flex-direction:column;gap:0.42rem;}
+.phil li{font-size:0.95rem;color:var(--ink-2);display:flex;gap:0.55rem;align-items:baseline;}
+.phil li::before{content:"";width:0.3rem;height:0.3rem;border-radius:50%;background:var(--tone);flex:none;}
+.phil .bar{position:absolute;left:0;bottom:0;height:0.18rem;width:0;background:var(--tone);transition:width 4s linear;}
+.phil.hot .bar{width:100%;}
+
+/* ---------------- Puntos de navegación ---------------- */
+.dots{display:flex;align-items:center;justify-content:center;gap:0.45rem;height:2.1rem;flex:none;}
+.dots button{
+  border:none;padding:0;cursor:pointer;background:#D5DDE6;
+  width:0.42rem;height:0.42rem;border-radius:50%;transition:width .3s ease, background .3s ease;
+}
+.dots button.on{width:1.5rem;border-radius:999px;background:var(--blue);}
+.dots .lbl{font-size:0.6rem;color:var(--ink-3);margin-left:0.6rem;}
+body.paused .dots .lbl::after{content:" · en pausa";color:var(--orange);}
+</style>
+</head>
+<body>
+
+<div id="canvas">
+
+<header class="topbar">
+  <div class="logo"><span class="w">TEKUN</span><span class="o"></span></div>
+  <div class="hud" id="hud" data-state="ok">
+    <span class="time num" id="clock">--:--</span>
+    <span class="sep"></span>
+    <span class="sync"><i class="led"></i><span id="syncTxt">Sincronizando…</span></span>
+  </div>
+</header>
+<div class="progress"><i id="bar"></i></div>
+
+<main class="stage">
+  <section class="slide" id="s1"></section>
+  <section class="slide" id="s2"></section>
+  <section class="slide" id="s3"></section>
+  <section class="slide" id="s4"></section>
+  <section class="slide" id="s5"></section>
+</main>
+
+</div>
+
+<script>
+/* ==========================================================================
+   1. CONFIGURACIÓN
+   ========================================================================== */
+const CONFIG = {
+  duraciones: {            // segundos que dura cada slide en pantalla
+    s1: 20, s2: 18, s3: 20, s4: 20, s5: 16
+  },
+  refrescoDatos: 60,       // segundos entre consultas a la API
+  recargaTotal: 6 * 3600,  // recarga completa del navegador (evita fugas de memoria)
+  mostrarReloj: true       // pon false para dejar la barra superior idéntica a Figma
+};
+
+/* ==========================================================================
+   2. ORIGEN DE DATOS
+   Con USAR_DATOS_FICTICIOS = true todo sale del generador de ejemplo.
+   Para conectar la API real: ponlo en false y llena ENDPOINTS.
+   Si tu API usa otros nombres de campo, ajusta las funciones mapear*.
+   ========================================================================== */
+const USAR_DATOS_FICTICIOS = true;
+
+const ENDPOINTS = {
+  metricas:      '/api/tablero/metricas',       // clientes, proyectos, oportunidades
+  tickets:       '/api/tablero/tickets',        // totales, por sistema, serie diaria
+  anuncios:      '/api/tablero/anuncios',       // avisos y reconocimientos
+  cumpleanos:    '/api/tablero/cumpleanos',
+  vacaciones:    '/api/tablero/vacaciones',
+  capacitaciones:'/api/tablero/capacitaciones',
+  juntas:        '/api/tablero/juntas',
+  recordatorio:  '/api/tablero/recordatorio'    // mensaje de TekAsist
+};
+
+const TOKEN = '';  // llave de solo lectura, si tu API la exige
+
+/* Traductores: API real -> estructura que espera el tablero.
+   Ejemplo de cómo ajustar si los campos vienen con otro nombre. */
+const MAPEO = {
+  cumpleanos: r => (r.items || r).map(x => ({
+    nombre: x.nombre ?? x.fullName,
+    area:   x.area   ?? x.department,
+    fecha:  new Date(x.fecha ?? x.birthDate)
+  })),
+  vacaciones: r => (r.items || r).map(x => ({
+    nombre: x.nombre ?? x.fullName,
+    area:   x.area   ?? x.department,
+    ini:    new Date(x.inicio ?? x.startDate),
+    fin:    new Date(x.fin    ?? x.endDate)
+  }))
+};
+
+/* ==========================================================================
+   3. UTILIDADES
+   ========================================================================== */
+const $ = s => document.querySelector(s);
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MESES_C = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DOW = ['LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO','DOMINGO'];
+
+const hoy = () => new Date();
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const sameDay = (a,b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+const entre = (d,a,b) => d >= new Date(a.getFullYear(),a.getMonth(),a.getDate()) && d <= new Date(b.getFullYear(),b.getMonth(),b.getDate());
+const fechaLarga = d => d.getDate() + ' ' + MESES_C[d.getMonth()];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nf = new Intl.NumberFormat('es-MX');
+
+let sd = 11;
+const jitter = (base,pct) => { sd = (sd*9301+49297)%233280; return Math.round(base*(1+(sd/233280-0.5)*2*pct)); };
+
+/* ==========================================================================
+   4. DATOS DE EJEMPLO
+   Se generan sobre el mes en curso para que la demo siempre se vea vigente.
+   ========================================================================== */
+function datosFicticios(){
+  const n = hoy(), Y = n.getFullYear(), M = n.getMonth();
+  const dia = d => new Date(Y, M, d);
+
+  return {
+    recordatorio: { texto:'Recuerda checar entrada y salida' },
+
+    metricas: {
+      clientes:      { total: jitter(48,.02), delta:'+4%',  tono:'green' },
+      proyectos:     { total: jitter(23,.05), delta:'+2',   tono:'blue'  },
+      oportunidades: { total: jitter(12,.1),  delta:'',     tono:'grey'  }
+    },
+
+    anuncios: [{
+      // Si la API entrega una imagen, se usa directo: imagen:'https://…/anuncio.png'
+      imagen: null,
+      titulo: 'Equipo Haras Agua',
+      ribbon: '¡FELICITACIONES!',
+      encabezado: 'EQUIPO<br>HARAS AGUA',
+      bajada: 'SU ESFUERZO, TALENTO Y COMPROMISO<br><b>GENERAN GRANDES RESULTADOS</b>',
+      gracias: 'Gracias por su dedicación, pasión y trabajo en equipo. <b>Este logro es de cada uno de ustedes.</b>',
+      hito: 'MÁS DE <em>8 MESES</em> EN PRODUCCIÓN',
+      pill: 'CON TOTAL SATISFACCIÓN DEL CLIENTE',
+      caption: 'El impacto del sistema habla por sí solo:',
+      antes: { lbl:'ANTES', val:'90 MIL', unit:'PESOS / MES' },
+      ahora: { lbl:'AHORA', val:'300 MIL', unit:'PESOS / MES' },
+      badge: '¡Un incremento de más del <b>200%</b> en la recaudación mensual!',
+      script: '¡Sigamos Innovando!',
+      nota1: 'Este éxito es prueba de que cuando trabajamos con enfoque, colaboración y pasión, transformamos <b>procesos y mejoramos vidas.</b>',
+      nota2: 'A todos los equipos de la Dirección de Innovación: <b>este logro es inspiración para seguir creando soluciones que generen valor y marquen la diferencia.</b>',
+      cierre: '¡Vamos por más!',
+      valores: ['TRABAJO EN EQUIPO','ENFOQUE EN RESULTADOS','INNOVACIÓN CON PROPÓSITO','COMPROMISO Y CALIDAD','IMPACTO QUE TRANSFORMA'],
+      pie: '¡FELICIDADES EQUIPO HARAS AGUA!',
+      pieSub: 'Su trabajo deja huella y construye el futuro.'
+    }],
+
+    cumpleanos: [
+      { nombre:'Edgar Carcaño',      area:'Dirección de Negocios', fecha: dia(2)  },
+      { nombre:'Sthepanie Teyssier', area:'Automatización',        fecha: dia(9)  },
+      { nombre:'Astrid Viridiana',   area:'Desarrollo',            fecha: dia(22) }
+    ],
+
+    vacaciones: [
+      { nombre:'Lina Gómez', area:'Diseño UX/UI', ini: dia(10), fin: dia(14) }
+    ],
+
+    capacitaciones: [
+      { nombre:'Lina Gómez', area:'Diseño UX/UI', tema:'Laserfiche nivel 2', ini: dia(10), fin: dia(14) }
+    ],
+
+    juntas: [
+      { titulo:'Arranque de semana',     area:'Todo el equipo · Sala Cholula', fecha: dia(7),  hora:'09:00' },
+      { titulo:'Comité de calidad',      area:'Implementación · Sala 2',       fecha: dia(16), hora:'13:00' },
+      { titulo:'Revisión con Dirección', area:'Jefaturas · Sala principal',    fecha: dia(24), hora:'17:00' }
+    ],
+
+    tickets: {
+      nuevos:   jitter(2,.4),
+      abiertos: jitter(19,.12),
+      urgentes: jitter(3,.4),
+      desempeno: Math.min(99, jitter(94,.03)),
+      primeraRespuesta: (jitter(38,.15)/10).toFixed(1),
+      sistemas: [
+        { n:'Odoo',              total: jitter(46,.02),   nuevo:1, activo:1, cerrados: jitter(44,.02),   sinInc:0 },
+        { n:'Laserfiche',        total: jitter(215,.01),  nuevo:0, activo:3, cerrados: jitter(212,.01),  sinInc:0 },
+        { n:'Microsoft',         total: jitter(23,.03),   nuevo:0, activo:0, cerrados: jitter(23,.03),   sinInc:0 },
+        { n:'Plataforma digital',total: jitter(9,.1),     nuevo:1, activo:0, cerrados: jitter(8,.1),     sinInc:0 },
+        { n:'Mantenimiento',     total: jitter(408,.01),  nuevo:0, activo:9, cerrados: jitter(399,.01),  sinInc:0 },
+        { n:'Soporte Mizza',     total: jitter(1250,.005),nuevo:0, activo:6, cerrados: jitter(1244,.005),sinInc:0 }
+      ],
+      serie: ['L','M','M','J','V','S','D'].map((d,i) => ({
+        d, nuevos: jitter([6,9,7,11,8,3,2][i], .25), cerrados: jitter([5,8,9,10,9,4,1][i], .25)
+      }))
+    },
+
+    filosofia: {
+      mision:'Trabajar en conjunto con nuestros clientes para poder entender sus necesidades y ofrecer los servicios que apoyen en su desarrollo y crecimiento, integrando los factores tecnológicos y el factor humano',
+      vision:'Agregar valor a las organizaciones a través de soluciones tecnológicas integrales, eficientes y óptimas para cada proceso',
+      valores:['Honestidad','Calidad','Trabajo en equipo','Compromiso','Transparencia']
+    },
+
+    ts: Date.now()
+  };
+}
+
+/* ==========================================================================
+   5. CAPA DE OBTENCIÓN
+   ========================================================================== */
+let DATOS = null, ultimaCarga = 0, estado = 'ok';
+
+async function obtenerDatos(){
+  if (USAR_DATOS_FICTICIOS){
+    DATOS = datosFicticios(); ultimaCarga = Date.now(); estado = 'ok';
+    return DATOS;
+  }
+  try{
+    const claves = Object.keys(ENDPOINTS);
+    const headers = TOKEN ? { Authorization:'Bearer ' + TOKEN } : {};
+    const res = await Promise.all(claves.map(k =>
+      fetch(ENDPOINTS[k], { headers, cache:'no-store' })
+        .then(r => { if(!r.ok) throw new Error(k + ' → ' + r.status); return r.json(); })
+    ));
+    const nuevo = {};
+    claves.forEach((k,i) => nuevo[k] = MAPEO[k] ? MAPEO[k](res[i]) : res[i]);
+    DATOS = Object.assign({}, DATOS || datosFicticios(), nuevo, { ts: Date.now() });
+    ultimaCarga = Date.now(); estado = 'ok';
+  }catch(e){
+    console.error('[tablero]', e);
+    estado = DATOS ? 'stale' : 'offline';
+    if (!DATOS) DATOS = datosFicticios();   // nunca dejar la TV en blanco
+  }
+  return DATOS;
+}
+
+function pintarEstado(){
+  const hud = $('#hud'); hud.dataset.state = estado;
+  if (estado === 'offline'){ $('#syncTxt').textContent = 'sin conexión'; return; }
+  const s = Math.round((Date.now()-ultimaCarga)/1000);
+  $('#syncTxt').textContent = (estado==='stale' ? 'último dato ' : '') + (s < 60 ? 'hace ' + s + ' s' : 'hace ' + Math.round(s/60) + ' min');
+}
+
+/* ==========================================================================
+   6. VISTAS
+   ========================================================================== */
+
+function filaPersona(nombre, area, valor, tono){
+  return `<div class="row">
+    <div><div class="nm">${esc(nombre)}</div><div class="rl">${esc(area)}</div></div>
+    <div class="vl ${tono}">${valor}</div>
+  </div>`;
+}
+
+function poster(a){
+  if (a.imagen) return `<img src="${esc(a.imagen)}" alt="${esc(a.titulo)}">`;
+  return `
+  <div class="poster">
+    <div class="top">
+      <div class="left">
+        <div>
+          <div class="ribbon">${a.ribbon}</div>
+          <div class="big">${a.encabezado}</div>
+          <div class="sub">${a.bajada}</div>
+        </div>
+        <div class="thanks">${a.gracias}</div>
+      </div>
+      <div class="right">
+        <div class="r1">${a.hito}</div>
+        <div class="pill">${a.pill}</div>
+        <div class="cap">${a.caption}</div>
+        <div class="compare">
+          <div><div class="lbl">${a.antes.lbl}</div><div class="val">${a.antes.val}</div><div class="unit">${a.antes.unit}</div></div>
+          <div class="arw">→</div>
+          <div><div class="lbl">${a.ahora.lbl}</div><div class="val up">${a.ahora.val}</div><div class="unit">${a.ahora.unit}</div></div>
+        </div>
+        <div class="badge-pct"><span class="chk">✓</span><span>${a.badge}</span></div>
+        <div class="script">${a.script}</div>
+        <div class="note">${a.nota1}</div>
+        <div class="note">${a.nota2} <b style="color:#12A05C">${a.cierre}</b></div>
+      </div>
+    </div>
+    <div class="values">${a.valores.map(v=>`<span>${v}</span>`).join('')}</div>
+    <div class="foot">${a.pie} <em>| ${a.pieSub}</em></div>
+  </div>`;
+}
+
+/* ---- Slide 1: panorama general ---- */
+function vista1(d){
+  const cumples = d.cumpleanos
+    .slice().sort((a,b)=>a.fecha-b.fecha)
+    .map(c => filaPersona(c.nombre, c.area, fechaLarga(c.fecha), 'blue')).join('');
+
+  const vacs = d.vacaciones.length
+    ? d.vacaciones.map(v => filaPersona(v.nombre, v.area, fechaLarga(v.ini)+' - '+fechaLarga(v.fin), 'green')).join('')
+    : `<div class="row"><div class="rl">Nadie de vacaciones esta semana</div></div>`;
+
+  const m = d.metricas;
+  return `
+  <div class="grid">
+    <div class="col fade">
+      <div class="card tekasist">
+        <div class="badge"><div class="clock"></div><div class="tag">TekAsist</div></div>
+        <div class="msg">${esc(d.recordatorio.texto)}</div>
+      </div>
+      <div class="card anuncio-card">
+        <div class="pane-h head"><span class="ico">🔔</span><h3>Anuncios</h3></div>
+        <div class="body">${poster(d.anuncios[0])}</div>
+      </div>
+    </div>
+
+    <div class="col fade">
+      <div class="pane tint-sky">
+        <div class="pane-h"><span class="ico">🎂</span><h3>Cumpleaños del mes</h3></div>
+        <div class="pane-b">${cumples}</div>
+      </div>
+      <div class="pane tint-green">
+        <div class="pane-h"><span class="ico">🌴</span><h3>De vacaciones</h3></div>
+        <div class="pane-b">${vacs}</div>
+      </div>
+    </div>
+
+    <div class="rail fade">
+      <div class="stat" style="background:var(--t-mint)">
+        <div class="lbl">CLIENTES</div>
+        <div class="foot"><div class="n num">${nf.format(m.clientes.total)}</div><div class="d green">↑ ${m.clientes.delta}</div></div>
+      </div>
+      <div class="stat" style="background:var(--t-lav)">
+        <div class="lbl">PROYECTOS</div>
+        <div class="foot"><div class="n num">${nf.format(m.proyectos.total)}</div><div class="d blue">↑ ${m.proyectos.delta}</div></div>
+      </div>
+      <div class="stat" style="background:var(--t-peach)">
+        <div class="lbl">OPORTUNIDADES</div>
+        <div class="foot"><div class="n num">${nf.format(m.oportunidades.total)}</div><div class="d grey"></div></div>
+      </div>
+      <h4>Tickets</h4>
+      <div class="tk" style="background:#FDF3E8"><span class="lbl">NUEVOS</span><span class="n orange num">${String(d.tickets.nuevos).padStart(2,'0')}</span></div>
+      <div class="tk" style="background:var(--t-blue)"><span class="lbl">ABIERTOS</span><span class="n blue num">${d.tickets.abiertos}</span></div>
+      <div class="tk" style="background:#FBEBE9"><span class="lbl">URGENTES</span><span class="n red num">${String(d.tickets.urgentes).padStart(2,'0')}</span></div>
+    </div>
+  </div>`;
+}
+
+/* ---- Slide 2: anuncio a pantalla completa ---- */
+function vista2(d){
+  return `<div class="full fade"><div class="shell">${poster(d.anuncios[0])}</div></div>`;
+}
+
+/* ---- Slide 3: calendario ---- */
+function vista3(d){
+  const n = hoy(), Y = n.getFullYear(), M = n.getMonth();
+  const primero = new Date(Y, M, 1);
+  const offset = (primero.getDay() + 6) % 7;          // lunes = 0
+  const totalDias = new Date(Y, M+1, 0).getDate();
+
+  const eventosDe = f => {
+    const out = [];
+    d.cumpleanos.forEach(c => { if (sameDay(c.fecha,f)) out.push({cls:'cum', txt:'🎂 ' + c.nombre.split(' ')[0]}); });
+    d.vacaciones.forEach(v => { if (entre(f,v.ini,v.fin)) out.push({cls:'vac', txt:'🌴 ' + v.nombre.split(' ')[0]}); });
+    d.capacitaciones.forEach(c => { if (entre(f,c.ini,c.fin)) out.push({cls:'cap', txt:'📚 ' + c.nombre.split(' ')[0]}); });
+    d.juntas.forEach(j => { if (sameDay(j.fecha,f)) out.push({cls:'jun', txt:'👥 ' + j.hora}); });
+    return out.slice(0,2);
+  };
+
+  let celdas = '';
+  for (let i=0;i<offset;i++) celdas += `<div class="cell void"></div>`;
+  for (let dnum=1; dnum<=totalDias; dnum++){
+    const f = new Date(Y,M,dnum);
+    const evs = eventosDe(f).map(e => `<span class="pill ${e.cls}">${esc(e.txt)}</span>`).join('');
+    celdas += `<div class="cell ${sameDay(f,n)?'today':''}"><span class="d num">${dnum}</span>${evs}</div>`;
+  }
+
+  const cumples = d.cumpleanos.slice().sort((a,b)=>a.fecha-b.fecha)
+    .map(c => filaPersona(c.nombre, c.area, fechaLarga(c.fecha), 'blue')).join('');
+  const vacs = d.vacaciones.map(v => filaPersona(v.nombre, v.area, fechaLarga(v.ini)+' - '+fechaLarga(v.fin), 'green')).join('')
+    || `<div class="row"><div class="rl">Sin ausencias registradas</div></div>`;
+  const caps = d.capacitaciones.map(c => filaPersona(c.nombre, c.area, fechaLarga(c.ini)+' - '+fechaLarga(c.fin), 'purple')).join('')
+    || `<div class="row"><div class="rl">Sin capacitaciones programadas</div></div>`;
+
+  const juntas = d.juntas.slice().sort((a,b)=>a.fecha-b.fecha).slice(0,3)
+    .map(j => `<div class="row">
+        <div><div class="nm">${esc(j.titulo)}</div><div class="rl">${esc(j.area)}</div></div>
+        <div class="vl purple">${fechaLarga(j.fecha)} · ${j.hora}</div>
+      </div>`).join('')
+    || `<div class="row"><div class="rl">Sin juntas programadas</div></div>`;
+
+  return `
+  <div class="grid">
+    <div class="cal-col fade">
+      <div class="card cal">
+        <div class="h">
+          <h2>${MESES[M]} ${Y}</h2>
+          <div class="legend">
+            <span><i style="background:var(--blue)"></i>Cumpleaños</span>
+            <span><i style="background:var(--green)"></i>Vacaciones</span>
+            <span><i style="background:var(--purple)"></i>Juntas</span>
+            <span><i style="background:var(--amber)"></i>Capacitación</span>
+          </div>
+        </div>
+        <div class="dows">${DOW.map(x=>`<span>${x}</span>`).join('')}</div>
+        <div class="grid-days">${celdas}</div>
+      </div>
+      <div class="pane tint-cream">
+        <div class="pane-h"><span class="ico">👥</span><h3>Juntas y reuniones</h3></div>
+        <div class="juntas-strip">${juntas}</div>
+      </div>
+    </div>
+    <div class="col fade" style="display:flex;flex-direction:column;gap:1.05rem;min-height:0">
+      <div class="pane tint-sky"><div class="pane-h"><span class="ico">🎂</span><h3>Cumpleaños del mes</h3></div><div class="pane-b">${cumples}</div></div>
+      <div class="pane tint-green"><div class="pane-h"><span class="ico">🌴</span><h3>De vacaciones</h3></div><div class="pane-b">${vacs}</div></div>
+      <div class="pane tint-lav"><div class="pane-h"><span class="ico">📚</span><h3>Capacitación</h3></div><div class="pane-b">${caps}</div></div>
+    </div>
+  </div>`;
+}
+
+/* ---- Slide 4: tickets ---- */
+function vista4(d){
+  const t = d.tickets;
+
+  /* Gráfica 1: carga abierta por sistema (activos + nuevos). Suma los abiertos totales. */
+  const carga = t.sistemas.map(s => ({ n:s.n, v:s.activo + s.nuevo })).sort((a,b)=>b.v-a.v);
+  const maxCarga = Math.max(...carga.map(x=>x.v), 1);
+  const barrasCarga = carga.map(x => `
+    <div class="hb">
+      <span class="nm">${esc(x.n)}</span>
+      <span class="tr"><i style="width:${(x.v/maxCarga*100).toFixed(0)}%;background:${x.v>=5?'var(--orange)':'var(--blue)'}"></i></span>
+      <span class="vv">${x.v}</span>
+    </div>`).join('');
+
+  /* Gráfica 2: volumen histórico atendido por sistema */
+  const vol = t.sistemas.map(s => ({ n:s.n, v:s.cerrados })).sort((a,b)=>b.v-a.v);
+  const maxVol = Math.max(...vol.map(x=>x.v), 1);
+  const barrasVol = vol.map(x => `
+    <div class="hb">
+      <span class="nm">${esc(x.n)}</span>
+      <span class="tr"><i style="width:${(x.v/maxVol*100).toFixed(0)}%;background:#8FCFAE"></i></span>
+      <span class="vv">${nf.format(x.v)}</span>
+    </div>`).join('');
+
+  /* Gráfica 3: entradas contra salidas de la semana */
+  const max = Math.max(...t.serie.flatMap(x => [x.nuevos, x.cerrados])) || 1;
+  const barras = t.serie.map(x => `
+    <div class="g">
+      <div class="pair">
+        <div class="b nue" style="height:${(x.nuevos/max*100).toFixed(0)}%"></div>
+        <div class="b cer" style="height:${(x.cerrados/max*100).toFixed(0)}%"></div>
+      </div>
+      <span class="cap">${x.d}</span>
+    </div>`).join('');
+
+  const r = 42, circ = 2*Math.PI*r;
+
+  return `
+  <div class="box fade">
+    <div class="h">
+      <h2>Tickets</h2>
+      <div class="total-pill"><span>TOTAL DE TICKETS ABIERTOS</span><b class="num">${t.abiertos}</b></div>
+    </div>
+    <div class="charts">
+      <div class="viz-card">
+        <div class="t">Tickets abiertos por sistema</div>
+        <div class="s">activos y recién levantados, ahora mismo</div>
+        <div class="hbars">${barrasCarga}</div>
+      </div>
+
+      <div class="viz-card">
+        <div class="t">Desempeño de la mesa</div>
+        <div class="s">últimos 30 días</div>
+        <div class="gauge">
+          <div class="ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="bgc" cx="50" cy="50" r="${r}" fill="none" stroke-width="10"/>
+              <circle class="fgc" cx="50" cy="50" r="${r}" fill="none" stroke-width="10"
+                      stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ*(1-t.desempeno/100)).toFixed(1)}"/>
+            </svg>
+            <div class="mid"><b class="num">${t.desempeno}%</b><span>en tiempo</span></div>
+          </div>
+          <div class="facts">
+            <div class="f"><b style="color:var(--blue)">${t.primeraRespuesta} h</b><span>primera<br>respuesta</span></div>
+            <div class="f"><b style="color:var(--orange)">${t.nuevos}</b><span>nuevos<br>hoy</span></div>
+            <div class="f"><b style="color:var(--red)">${t.urgentes}</b><span>urgentes<br>activos</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="viz-card">
+        <div class="t">Entradas contra cierres</div>
+        <div class="s">últimos 7 días</div>
+        <div class="spark">${barras}</div>
+        <div class="viz-legend">
+          <span><i style="background:var(--orange)"></i>Nuevos</span>
+          <span><i style="background:#8FCFAE"></i>Cerrados</span>
+        </div>
+      </div>
+
+      <div class="viz-card">
+        <div class="t">Volumen atendido por sistema</div>
+        <div class="s">tickets cerrados, histórico</div>
+        <div class="hbars">${barrasVol}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---- Slide 5: filosofía ---- */
+function vista5(d){
+  const f = d.filosofia;
+  const ico = {
+    globo:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15 0 18M12 3c-2.5 2.7-2.5 15 0 18"/>',
+    flecha:'<path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v5h-5"/>',
+    escudo:'<path d="M12 3l8 3.5v5c0 5-3.4 8.6-8 9.5-4.6-.9-8-4.5-8-9.5v-5L12 3z"/>'
+  };
+  const card = (tono,soft,idx,eyebrow,icono,titulo,cuerpo) => `
+    <div class="phil" data-i="${idx-1}" style="--tone:${tono};--tone-soft:${soft};border-color:${tono}">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icono}</svg></div>
+      <div class="eyebrow">0${idx} / ${eyebrow}</div>
+      <h3>${titulo}</h3>
+      ${cuerpo}
+      <span class="bar"></span>
+    </div>`;
+
+  return `
+  <div class="grid fade">
+    ${card('#4A7EF5','#EAF0FE',1,'PROPÓSITO',ico.globo,'Nuestra misión',`<p>${esc(f.mision)}</p>`)}
+    ${card('#8B5CF6','#F1ECFE',2,'DESTINO',ico.flecha,'Nuestra visión',`<p>${esc(f.vision)}</p>`)}
+    ${card('#F5A623','#FEF3E2',3,'INTEGRIDAD',ico.escudo,'Nuestros valores',`<ul>${f.valores.map(v=>`<li>${esc(v)}</li>`).join('')}</ul>`)}
+  </div>`;
+}
+
+/* ==========================================================================
+   7. MOTOR DE ROTACIÓN
+   ========================================================================== */
+const SLIDES = [
+  { id:'s1', nombre:'Panorama general', dur:CONFIG.duraciones.s1, render:vista1 },
+  { id:'s2', nombre:'Anuncio destacado', dur:CONFIG.duraciones.s2, render:vista2 },
+  { id:'s3', nombre:'Calendario del mes', dur:CONFIG.duraciones.s3, render:vista3 },
+  { id:'s4', nombre:'Tickets', dur:CONFIG.duraciones.s4, render:vista4 },
+  { id:'s5', nombre:'Filosofía', dur:CONFIG.duraciones.s5, render:vista5 }
+];
+
+let actual = 0, transcurrido = 0, ultimo = null, pausado = false, cicloFil = null;
+const sucias = new Set();
+
+function dibujar(i, forzar){
+  const s = SLIDES[i], nodo = document.getElementById(s.id);
+  if (!DATOS) return;
+  if (!forzar && nodo.innerHTML && !sucias.has(i)) return;
+  nodo.innerHTML = s.render(DATOS);
+  sucias.delete(i);
+}
+
+function mostrar(i){
+  actual = ((i % SLIDES.length) + SLIDES.length) % SLIDES.length;
+  dibujar(actual, sucias.has(actual));
+  SLIDES.forEach((s,k) => document.getElementById(s.id).classList.toggle('on', k===actual));
+  document.querySelectorAll('.dots button').forEach((b,k) => b.classList.toggle('on', k===actual));
+  const lbl = document.querySelector('.dots .lbl');
+  if (lbl) lbl.textContent = SLIDES[actual].nombre;
+  transcurrido = 0;
+  $('#bar').style.width = '0%';
+  arrancarFilosofia();
+}
+
+/* En la slide de filosofía, el foco pasa de una tarjeta a otra */
+function arrancarFilosofia(){
+  clearInterval(cicloFil);
+  const cards = document.querySelectorAll('#s5 .phil');
+  if (!cards.length || SLIDES[actual].id !== 's5') return;
+  let k = 0;
+  const paso = () => {
+    cards.forEach((c,idx) => c.classList.toggle('hot', idx===k));
+    k = (k+1) % cards.length;
+  };
+  paso();
+  cicloFil = setInterval(paso, 4000);
+}
+
+function siguiente(p=1){ mostrar(actual + p); }
+
+function bucle(ts){
+  if (ultimo === null) ultimo = ts;
+  const dt = ts - ultimo; ultimo = ts;
+  if (!pausado && DATOS){
+    transcurrido += dt;
+    const total = SLIDES[actual].dur * 1000;
+    $('#bar').style.width = Math.min(100, transcurrido/total*100) + '%';
+    if (transcurrido >= total) siguiente(1);
+  }
+  requestAnimationFrame(bucle);
+}
+
+/* ==========================================================================
+   8. ARRANQUE
+   ========================================================================== */
+function construirDots(){
+  const nav = document.createElement('nav');
+  nav.className = 'dots';
+  nav.innerHTML = SLIDES.map((s,i)=>`<button data-i="${i}" aria-label="${s.nombre}"></button>`).join('')
+                + `<span class="lbl"></span>`;
+  document.getElementById('canvas').appendChild(nav);
+  nav.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (b) mostrar(Number(b.dataset.i));
+  });
+}
+
+/* Escala el lienzo completo para que quepa en la pantalla sin deformarse.
+   En una TV 16:9 el ajuste es exacto; en otras proporciones deja franjas. */
+function ajustarEscala(){
+  const c = document.getElementById('canvas');
+  const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  c.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+}
+window.addEventListener('resize', ajustarEscala);
+
+function reloj(){
+  if (!CONFIG.mostrarReloj){ $('#hud').style.display='none'; return; }
+  const n = hoy();
+  $('#clock').textContent = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+  pintarEstado();
+}
+
+async function actualizar(){
+  await obtenerDatos();
+  SLIDES.forEach((_,i) => { if (i !== actual) dibujar(i, true); else sucias.add(i); });
+  pintarEstado();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') siguiente(1);
+  else if (e.key === 'ArrowLeft') siguiente(-1);
+  else if (e.code === 'Space'){ e.preventDefault(); pausado = !pausado; document.body.classList.toggle('paused', pausado); }
+  else if (e.key.toLowerCase() === 'r') actualizar();
+  else if (e.key.toLowerCase() === 'f'){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+});
+
+(async function iniciar(){
+  construirDots();
+  ajustarEscala();
+  await obtenerDatos();
+  SLIDES.forEach((_,i) => dibujar(i, true));
+  mostrar(0);
+  reloj();
+  setInterval(reloj, 1000);
+  setInterval(actualizar, CONFIG.refrescoDatos * 1000);
+  setTimeout(() => location.reload(), CONFIG.recargaTotal * 1000);
+  requestAnimationFrame(bucle);
+})();
+</script>
+</body>
+</html>
